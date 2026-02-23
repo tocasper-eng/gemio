@@ -87,6 +87,9 @@ IF NOT EXISTS (
     EXEC sp_addrolemember 'db_datawriter', 'casper';
 
 GRANT EXECUTE TO casper;
+
+-- 禁止 casper 查看 SP 定義（原始碼）；SP 名稱仍可見，但程式邏輯受保護
+DENY VIEW DEFINITION TO casper;
 GO
 
 -- =====================================================================
@@ -117,6 +120,9 @@ IF NOT EXISTS (
     EXEC sp_addrolemember 'db_datawriter', 'casper';
 
 GRANT EXECUTE TO casper;
+
+-- 禁止 casper 查看 SP 定義（原始碼）；SP 名稱仍可見，但程式邏輯受保護
+DENY VIEW DEFINITION TO casper;
 GO
 
 -- =====================================================================
@@ -147,6 +153,9 @@ IF NOT EXISTS (
     EXEC sp_addrolemember 'db_datawriter', 'casper';
 
 GRANT EXECUTE TO casper;
+
+-- 禁止 casper 查看 SP 定義（原始碼）；SP 名稱仍可見，但程式邏輯受保護
+DENY VIEW DEFINITION TO casper;
 GO
 
 -- =====================================================================

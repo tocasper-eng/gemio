@@ -23,6 +23,7 @@ SQL Server 2022 資料庫安全管理腳本。
 - 除了  id:drlee 能夠執行 dcl 之外，其他的 id 都不能執行dcl
 - id:casper 能擁有 database: casper , chjer , jet    授與 DML + EXECUTE
   但不要給 db_owner 改給 db_datareader + db_datawriter ）搭配 DCL Trigger
+- id:casper 在三個資料庫均 DENY VIEW DEFINITION（可執行 SP 但無法查看原始碼）
 - id:casper 除了 database: casper , chjer , jet 之外 ，其他的 database 都不能有view的權限
 - id:casper 擁有 VIEW ANY DATABASE 伺服器層級權限（讓 SSMS 能看到三個授權資料庫）
 - id:casper 在 casper、chjer、jet 三個資料庫擁有 db_backupoperator 角色（備份權限）
