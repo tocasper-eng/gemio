@@ -6,6 +6,7 @@ SQL Server 2022 資料庫安全管理腳本。
 ## 檔案結構
 - `gemio.sql` - 使用者權限設定腳本（Login 建立、資料庫 User 授權）
 - `trigger.sql` - 使用者權限設觸發器
+- `drop_trigger.sql` - 清除所有安全 Trigger（重新部署 trigger.sql 前執行）
 
 ## 環境
 - 資料庫：SQL Server 2022
