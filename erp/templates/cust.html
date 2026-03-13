@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title id="page-title">Customer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.6.1/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+    <style>
+        body { padding: 1.25rem; background: #f0f2f5; }
+        #toolbar { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
+        #grid { background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .tabulator-row.tabulator-selected { background: #cfe2ff !important; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <h6 class="fw-bold mb-3" id="page-heading"></h6>
+
+    <div id="toolbar">
+        <button class="btn btn-sm btn-primary"   id="btn-add"    onclick="onAdd()"></button>
+        <button class="btn btn-sm btn-warning"   id="btn-edit"   onclick="onEdit()"></button>
+        <button class="btn btn-sm btn-danger"    id="btn-delete" onclick="onDelete()"></button>
+        <button class="btn btn-sm btn-secondary" id="btn-copy"   onclick="onCopy()"></button>
+        <div class="input-group input-group-sm ms-auto" style="width:280px">
+            <input  type="text" class="form-control" id="search-input">
+            <button class="btn btn-outline-primary" id="btn-search" onclick="onSearch()"></button>
+        </div>
+    </div>
+
+    <div id="grid"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="formModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0" id="modal-title"></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold" id="lbl-num"></label>
+                        <input type="text" class="form-control form-control-sm" id="f-num" disabled>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold" id="lbl-custno"></label>
+                        <input type="text" class="form-control form-control-sm" id="f-custno" required>
+                        <div class="invalid-feedback" id="err-custno"></div>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small fw-semibold" id="lbl-custnm"></label>
+                        <input type="text" class="form-control form-control-sm" id="f-custnm">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold" id="lbl-kindno"></label>
+                        <select class="form-select form-select-sm" id="f-kindno">
+                            <option value=""></option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small fw-semibold" id="lbl-address0"></label>
+                        <input type="text" class="form-control form-control-sm" id="f-address0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" id="btn-cancel"></button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-save" onclick="onSave()"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.6.1/dist/js/tabulator.min.js"></script>
+<script>
+// ── i18n ──────────────────────────────────────────────────────────────────────
+const LANG_MAP = {
+    'zh-TW': {
+        title: '客戶主檔',
+        add: '新增', edit: '更改', del: '刪除', copy: '複製', search: '查詢',
+        cancel: '取消', save: '儲存',
+        num: '自動編號', custno: '客戶編號', custnm: '客戶名稱',
+        kindno: '客戶類別', address0: '公司全名',
+        modal_add: '新增客戶', modal_edit: '更改客戶', modal_copy: '複製客戶',
+        confirm_del: '確定要刪除此筆資料？',
+        err_select: '請先選取一筆資料',
+        err_dup: '客戶編號已存在，請重新輸入',
+        err_required: '必填欄位',
+        err_save: '儲存失敗，請稍後再試',
+        ph_search: '搜尋...',
+    },
+    'zh-CN': {
+        title: '客户主档',
+        add: '新增', edit: '更改', del: '删除', copy: '复制', search: '查询',
+        cancel: '取消', save: '保存',
+        num: '自动编号', custno: '客户编号', custnm: '客户名称',
+        kindno: '客户类别', address0: '公司全名',
+        modal_add: '新增客户', modal_edit: '更改客户', modal_copy: '复制客户',
+        confirm_del: '确定要删除此条数据？',
+        err_select: '请先选取一条数据',
+        err_dup: '客户编号已存在，请重新输入',
+        err_required: '必填项',
+        err_save: '保存失败，请稍后再试',
+        ph_search: '搜索...',
+    },
+    'en': {
+        title: 'Customer Master',
+        add: 'Add', edit: 'Edit', del: 'Delete', copy: 'Copy', search: 'Search',
+        cancel: 'Cancel', save: 'Save',
+        num: 'ID', custno: 'Customer No.', custnm: 'Customer Name',
+        kindno: 'Category', address0: 'Company Name',
+        modal_add: 'Add Customer', modal_edit: 'Edit Customer', modal_copy: 'Copy Customer',
+        confirm_del: 'Are you sure to delete this record?',
+        err_select: 'Please select a record first',
+        err_dup: 'Customer No. already exists',
+        err_required: 'Required field',
+        err_save: 'Save failed, please try again',
+        ph_search: 'Search...',
+    }
+};
+
+function detectLang() {
+    const l = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    if (l.startsWith('zh-tw') || l.startsWith('zh-hant')) return 'zh-TW';
+    if (l.startsWith('zh')) return 'zh-CN';
+    return 'en';
+}
+const T = LANG_MAP[detectLang()];
+
+// ── apply i18n ────────────────────────────────────────────────────────────────
+function applyI18n() {
+    document.getElementById('page-title').textContent    = T.title;
+    document.getElementById('page-heading').textContent  = T.title;
+    document.getElementById('btn-add').textContent       = T.add;
+    document.getElementById('btn-edit').textContent      = T.edit;
+    document.getElementById('btn-delete').textContent    = T.del;
+    document.getElementById('btn-copy').textContent      = T.copy;
+    document.getElementById('btn-search').textContent    = T.search;
+    document.getElementById('search-input').placeholder  = T.ph_search;
+    document.getElementById('lbl-num').textContent       = T.num;
+    document.getElementById('lbl-custno').textContent    = T.custno;
+    document.getElementById('lbl-custnm').textContent    = T.custnm;
+    document.getElementById('lbl-kindno').textContent    = T.kindno;
+    document.getElementById('lbl-address0').textContent  = T.address0;
+    document.getElementById('btn-cancel').textContent    = T.cancel;
+    document.getElementById('btn-save').textContent      = T.save;
+}
+
+// ── Grid ──────────────────────────────────────────────────────────────────────
+let table;
+let currentMode = 'add';
+
+function initGrid() {
+    table = new Tabulator('#grid', {
+        height: 'calc(100vh - 170px)',
+        layout: 'fitColumns',
+        selectable: 1,
+        placeholder: '—',
+        columns: [
+            { title: T.num,      field: 'num',      width: 90,  hozAlign: 'center', headerHozAlign: 'center' },
+            { title: T.custno,   field: 'custno',   width: 140 },
+            { title: T.custnm,   field: 'custnm',   widthGrow: 1 },
+            { title: T.kindno,   field: 'kindno',   width: 140 },
+            { title: T.address0, field: 'address0', widthGrow: 2 },
+        ],
+        rowDblClick(e, row) { openModal('edit', row.getData()); },
+    });
+    loadData();
+}
+
+async function loadData(q = '') {
+    const url = q ? `/api/cust?q=${encodeURIComponent(q)}` : '/api/cust';
+    const res  = await fetch(url);
+    table.setData(await res.json());
+}
+
+// ── kindno combobox ───────────────────────────────────────────────────────────
+async function loadKindno() {
+    const res = await fetch('/api/dict/kindno');
+    const opts = await res.json();
+    const sel = document.getElementById('f-kindno');
+    sel.innerHTML = '<option value=""></option>';
+    opts.forEach(k => {
+        const o = document.createElement('option');
+        o.value = o.textContent = k;
+        sel.appendChild(o);
+    });
+}
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+function getSelected() {
+    const rows = table.getSelectedRows();
+    return rows.length ? rows[0].getData() : null;
+}
+
+function openModal(mode, data = {}) {
+    currentMode = mode;
+    document.getElementById('modal-title').textContent =
+        mode === 'add' ? T.modal_add : mode === 'edit' ? T.modal_edit : T.modal_copy;
+
+    document.getElementById('f-num').value      = mode === 'edit' ? (data.num ?? '') : '';
+    document.getElementById('f-custno').value   = mode === 'copy' ? '' : (data.custno ?? '');
+    document.getElementById('f-custnm').value   = data.custnm  ?? '';
+    document.getElementById('f-kindno').value   = data.kindno  ?? '';
+    document.getElementById('f-address0').value = data.address0 ?? '';
+
+    clearValidation();
+    new bootstrap.Modal(document.getElementById('formModal')).show();
+    setTimeout(() => document.getElementById('f-custno').focus(), 300);
+}
+
+function clearValidation() {
+    document.getElementById('f-custno').classList.remove('is-invalid');
+    document.getElementById('err-custno').textContent = '';
+}
+
+// ── toolbar actions ───────────────────────────────────────────────────────────
+function onAdd()    { openModal('add'); }
+function onEdit()   { const d = getSelected(); d ? openModal('edit', d) : alert(T.err_select); }
+function onCopy()   { const d = getSelected(); d ? openModal('copy', d) : alert(T.err_select); }
+function onSearch() { loadData(document.getElementById('search-input').value.trim()); }
+
+async function onDelete() {
+    const d = getSelected();
+    if (!d) return alert(T.err_select);
+    if (!confirm(T.confirm_del)) return;
+    const res = await fetch(`/api/cust/${d.num}`, { method: 'DELETE' });
+    if (res.ok) loadData(document.getElementById('search-input').value.trim());
+}
+
+async function onSave() {
+    const custno = document.getElementById('f-custno').value.trim();
+    if (!custno) {
+        document.getElementById('f-custno').classList.add('is-invalid');
+        document.getElementById('err-custno').textContent = T.err_required;
+        return;
+    }
+    const payload = {
+        custno,
+        custnm:   document.getElementById('f-custnm').value.trim(),
+        kindno:   document.getElementById('f-kindno').value,
+        address0: document.getElementById('f-address0').value.trim(),
+    };
+    const num    = document.getElementById('f-num').value;
+    const isEdit = currentMode === 'edit';
+    const res    = await fetch(isEdit ? `/api/cust/${num}` : '/api/cust', {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+
+    if (res.status === 409) {
+        document.getElementById('f-custno').classList.add('is-invalid');
+        document.getElementById('err-custno').textContent = T.err_dup;
+        return;
+    }
+    if (!res.ok) return alert(T.err_save);
+
+    bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
+    loadData(document.getElementById('search-input').value.trim());
+}
+
+// ── init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    applyI18n();
+    loadKindno();
+    initGrid();
+    document.getElementById('search-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') onSearch();
+    });
+});
+</script>
+</body>
+</html>
